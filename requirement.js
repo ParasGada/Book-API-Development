@@ -28,7 +28,7 @@ Book
     - to get all books ✅
     - to get specific books ✅
     - to get a list of books based on category ✅
-    - to get a list of books based on author -> [Task] 🔥
+    - to get a list of books based on author -> [Task] ✅
 
  - POST
     - to add new book
@@ -45,7 +45,7 @@ Book
 Authors
  - GET
     - to get all authors ✅
-    - to get specific author -> [Task] 🔥
+    - to get specific author -> [Task] ✅
     - to get list of author based on a book
 
  - POST
@@ -60,8 +60,8 @@ Authors
 
 Publication
  - GET
-    - to get all publication -> [Task] 🔥
-    - to get specific publication -> [Task] 🔥
+    - to get all publication -> [Task] ✅
+    - to get specific publication -> [Task] ✅
     - to get a list of publication based on a book. -> [Task] 🔥
 
  - POST
