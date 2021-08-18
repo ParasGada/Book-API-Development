@@ -4,6 +4,8 @@ const Database = require("./database");
 
 const app = express();
 
+app.use(express.json());
+
 app.get("/",(req,res)=>{
     res.json({message:"Request Served"});
 });
@@ -93,6 +95,144 @@ app.get("/publication",(req,res)=>{
 app.get("/publication/:publicationID",(req,res)=>{
     const getPublication = Database.Publication.filter((publications)=>publications.id==req.params.publicationID);
     res.json({Publication:getPublication});
+});
+
+//Route         - /book/new
+//Description   - to add new book
+//Access        - public
+//Method        - POST
+//Params        - none
+//Body          - new book data
+app.post("/book/new",(req,res)=>{
+    const {newBook} = req.body;
+    Database.Book.push(newBook);
+    res.json(Database.Book);
+});
+
+//Route         - /author/new
+//Description   - to add new author
+//Access        - public
+//Method        - POST
+//Params        - none
+//Body          - new author data
+app.post("/author/new",(req,res)=>{
+    const {newAuthor} = req.body;
+    Database.Book.push(newAuthor);
+    res.json(Database.Author);
+});
+
+//Route         - /publication/new
+//Description   - to add new publication
+//Access        - public
+//Method        - POST
+//Params        - none
+//Body          - new publication data
+app.post("/publication/new",(req,res)=>{
+    const {newPublication} = req.body;
+    Database.Book.push(newPublication);
+    res.json(Database.Publication);
+});
+
+//Route         - /book/update/:isbn
+//Description   - to update book details
+//Access        - public
+//Method        - PUT
+//Params        - isbn
+//Body          - updated book data
+app.put("/book/update/:isbn",(req,res)=>{
+    const {updatedBook} = req.body;
+    const updateData = Database.Book.map((book)=>{
+        if(book.ISBN===req.params.isbn) return {...book,...updatedBook}
+        else return book;
+    });
+    Database.Book = updateData;
+    res.json(Database.Book);
+});
+
+//Route         - /bookAuthor/update/:isbn
+//Description   - to update/add new author to book
+//Access        - public
+//Method        - PUT
+//Params        - isbn
+//Body          - updated author/book data
+app.put("/bookAuthor/update/:isbn",(req,res)=>{
+    const {newAuthor} = req.body;
+    const {isbn} = req.params;
+    const updateBook= Database.Book.map((book)=>{
+        if(book.ISBN===isbn){
+            if(!book.authors.includes(newAuthor)){
+                book.authors.push(newAuthor);
+            }
+            else return book;
+        }
+        return book;
+    });
+    const updateAuthor= Database.Author.map((author)=>{
+        if(author.id===newAuthor){
+            if(!author.books.includes(isbn)){
+                author.books.push(isbn);
+            }
+            else return author;
+        }
+        return author;
+    });
+    console.log(updateBook,updateAuthor);
+    return res.json({Books:updateBook});
+});
+
+//Route         - /author/update/:id
+//Description   - to update author details
+//Access        - public
+//Method        - PUT
+//Params        - id
+//Body          - updated author data
+app.put("/author/update/:id",(req,res)=>{
+    const {updatedAuthor} = req.body;
+    const updateData = Database.Author.map((author)=>{
+        if(author.id===parseInt(req.params.id)) {
+            return {...author,...updatedAuthor};}
+        else return author;
+    });
+    Database.Author = updateData;
+    res.json(Database.Author);
+});
+
+//Route         - /publication/update/:id
+//Description   - to update publication details
+//Access        - public
+//Method        - PUT
+//Params        - id
+//Body          - updated publication data
+app.put("/publication/update/:id",(req,res)=>{
+    const {updatedPublication} = req.body;
+    const updateData = Database.Publication.map((pub)=>{
+        if(pub.id===parseInt(req.params.id)) {
+            return {...pub,...updatedPublication};}
+        else return pub;
+    });
+    Database.Publication = updateData;
+    res.json(Database.Publication);
+});
+
+//Route         - /bookPublication/update/:isbn
+//Description   - to update/add book to publications
+//Access        - public
+//Method        - PUT
+//Params        - id
+//Body          - updated book data
+app.put("/bookPublication/update/:id",(req,res)=>{
+    const {newBook} = req.body;
+    const {id} = req.params;
+    const updatePublication= Database.Publication.map((publication)=>{
+        if(publication.id===parseInt(id)){
+            if(!publication.books.includes(newBook)){
+                publication.books.push(newBook);
+            }
+            else return publication;
+        }
+        return publication;
+    });
+    return res.json({Publications:updatePublication});
 });
 
 app.listen(4000,()=>{
