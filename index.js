@@ -76,6 +76,17 @@ app.get("/author/:authorID",(req,res)=>{
     res.json({Author:getAuthor});
 });
 
+//Route         - /author/b/:book
+//Description   - to get a list of authors based on book
+//Access        - public
+//Method        - GET
+//Params        - book 
+//Body          - none
+app.get("/author/b/:bookID",(req,res)=>{
+    const getAuthors = Database.Author.filter((author)=>author.books.includes(req.params.bookID));
+    return res.json({Authors:getAuthors});
+});
+
 //Route         - /publication
 //Description   - to get all publications
 //Access        - public
@@ -95,6 +106,17 @@ app.get("/publication",(req,res)=>{
 app.get("/publication/:publicationID",(req,res)=>{
     const getPublication = Database.Publication.filter((publications)=>publications.id==req.params.publicationID);
     res.json({Publication:getPublication});
+});
+
+//Route         - /publication/b/:book
+//Description   - to get a list of publications based on book
+//Access        - public
+//Method        - GET
+//Params        - book
+//Body          - none
+app.get("/publication/b/:bookID",(req,res)=>{
+    const getPublication = Database.Publication.filter((pub)=>pub.books.includes(req.params.bookID));
+    return res.json({Publications:getPublication});
 });
 
 //Route         - /book/new
@@ -233,6 +255,125 @@ app.put("/bookPublication/update/:id",(req,res)=>{
         return publication;
     });
     return res.json({Publications:updatePublication});
+});
+
+//Route         - /book/delete/:isbn
+//Description   - to delete a specific book
+//Access        - public
+//Method        - DELETE
+//Params        - isbn
+//Body          - none
+app.delete("/book/delete/:isbn",(req,res)=>{
+    const {isbn} = req.params;
+    Database.Book = Database.Book.filter((book)=>book.ISBN!==isbn);
+    Database.Author.map((author)=>{
+        if(!author.books.includes(isbn)){
+            return author;
+        }
+        author.books = author.books.filter((book)=>book!==isbn);
+        return author;
+    });
+    Database.Publication.map((pub)=>{
+        if(!pub.books.includes(isbn)){
+            return pub;
+        }
+        pub.books = pub.books.filter((book)=>book!==isbn);
+        return pub;
+    });
+    return res.json({Database:Database});
+});
+
+//Route         - /book/delete/author/:isbn/:id
+//Description   - to delete a author from a book
+//Access        - public
+//Method        - DELETE
+//Params        - isbn,id
+//Body          - none
+app.delete("/book/delete/author/:isbn/:id",(req,res)=>{
+    const {isbn,id} = req.params;
+    Database.Book.map((book)=>{
+        if(book.ISBN===isbn){
+            if(!book.authors.includes(parseInt(id))){
+                return book;
+            }
+            book.authors = book.authors.filter((ID)=>ID!==parseInt(id));
+            return book;
+        }
+        return book;
+    });
+
+    Database.Author.map((author)=>{
+        if(author.id===parseInt(id)){
+            if(!author.books.includes(isbn)){
+                return author;
+            }
+            author.books = author.books.filter((book)=>book!==isbn);
+            return author;
+        }
+        return author;
+    });
+
+    return res.json({Database:Database});
+});
+
+//Route         - /author/delete/:id
+//Description   - to delete a specific author
+//Access        - public
+//Method        - DELETE
+//Params        - id
+//Body          - none
+app.delete("/author/delete/:id",(req,res)=>{
+    const {id} = req.params;
+    Database.Author = Database.Author.filter((author)=>author.id!==parseInt(id));
+    Database.Book.map((book)=>{
+        if(!book.authors.includes(parseInt(id))){
+            return book;
+        }
+        book.authors = book.authors.filter((author)=>author!==parseInt(id));
+        return book;
+    });
+    return res.json({Database:Database});
+});
+
+//Route         - /publication/delete/:id
+//Description   - to delete a specific publication
+//Access        - public
+//Method        - DELETE
+//Params        - id
+//Body          - none
+app.delete("/publication/delete/:id",(req,res)=>{
+    const {id} = req.params;
+    Database.Publication = Database.Publication.filter((pub)=>pub.id!==parseInt(id));
+    return res.json({Database:Database});
+});
+
+//Route         - /book/delete/publication/:isbn/:id
+//Description   - to delete a publication from a book and book from publication
+//Access        - public
+//Method        - DELETE
+//Params        - isbn,id
+//Body          - none
+app.delete("/book/delete/publication/:isbn/:id",(req,res)=>{
+    const {isbn,id} = req.params;
+    Database.Book.map((book)=>{
+        if(book.ISBN===isbn){
+           book.publication = book.publication - 1;
+        }
+        return book;
+    });
+
+    Database.Publication.map((pub)=>{
+        if(pub.id===parseInt(id)){
+            if(!pub.books.includes(isbn)){
+                return pub;
+            }
+            pub.books = pub.books.filter((book)=>book!==isbn);
+            return pub;
+        }
+        return pub;
+    });
+
+    return res.json({Database:Database});
 });
 
 app.listen(4000,()=>{
