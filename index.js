@@ -1,6 +1,17 @@
+require("dotenv").config();
+
 const express = require("express");
 
 const Database = require("./database");
+
+const mongoose = require("mongoose");
+
+mongoose.connect(process.env.MONGO_URL,{
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true
+  }).then(()=>console.log("Connection Established")).catch((error)=>console.log(error));
 
 const app = express();
 
@@ -312,7 +323,6 @@ app.delete("/book/delete/author/:isbn/:id",(req,res)=>{
         }
         return author;
     });
-
     return res.json({Database:Database});
 });
 
@@ -372,7 +382,6 @@ app.delete("/book/delete/publication/:isbn/:id",(req,res)=>{
         }
         return pub;
     });
-
     return res.json({Database:Database});
 });
 
