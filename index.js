@@ -17,8 +17,12 @@ const app = express();
 
 app.use(express.json());
 
+const Book = require("./Schemas/Book");
+const Author = require("./Schemas/Author");
+const Publication = require("./Schemas/Publication");
+
 app.get("/",(req,res)=>{
-    res.json({message:"Request Served"});
+    return res.json({message:"Request Served"});
 });
 
 //Route         - /book
@@ -27,8 +31,9 @@ app.get("/",(req,res)=>{
 //Method        - GET
 //Params        - none
 //Body          - none
-app.get("/book",(req,res)=>{
-    res.json({Books:Database.Book})
+app.get("/book",async (req,res)=>{
+    const getBooks = await Book.find();
+    return res.json(getBooks);
 });
 
 //Route         - /book/:bookID
@@ -37,20 +42,25 @@ app.get("/book",(req,res)=>{
 //Method        - GET
 //Params        - bookID
 //Body          - none
-app.get("/book/:bookID",(req,res)=>{
-    const getBook = Database.Book.filter((book)=>book.ISBN===req.params.bookID);
-    res.json({Book:getBook});
+app.get("/book/:bookID",async (req,res)=>{
+    const getSpecificBook = await Book.findOne({ISBN:req.params.bookID});
+    return res.json(getSpecificBook);
 });
 
-//Route         - /book/:bookID
+//Route         - /book/c/:category
 //Description   - to get a list of books based on category
 //Access        - public
 //Method        - GET
 //Params        - catergory
 //Body          - none
-app.get("/book/c/:category",(req,res)=>{
-    const getBook = Database.Book.filter((book)=>book.category.includes(req.params.category));
-    res.json({Book:getBook});
+app.get("/book/c/:category",async (req,res)=>{ 
+    try{
+        const getBooks = await Book.find();
+        const filtered = getBooks.filter((book)=>book.category.includes(req.params.category));
+        return res.json(filtered);
+    }catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /book/a/:author
@@ -59,11 +69,14 @@ app.get("/book/c/:category",(req,res)=>{
 //Method        - GET
 //Params        - author
 //Body          - none
-app.get("/book/a/:author",(req,res)=>{
-    const findAuthor = Database.Author.filter((author)=>author.name===req.params.author).reduce((author)=>author.id);
-    authorID= findAuthor.id;
-    const getBooks = Database.Book.filter((book)=>book.authors.includes(authorID));
-    return res.json({Books:getBooks});
+app.get("/book/a/:author",async (req,res)=>{
+    try{
+        const getBooks = await Book.find();
+        const filtered = getBooks.filter((book)=>book.authors.includes(req.params.author));
+        return res.json(filtered);
+    }catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /author
@@ -72,8 +85,9 @@ app.get("/book/a/:author",(req,res)=>{
 //Method        - GET
 //Params        - none
 //Body          - none
-app.get("/author",(req,res)=>{
-    res.json({Authors:Database.Author})
+app.get("/author",async (req,res)=>{
+    const getAuthors = await Author.find();
+    return res.json(getAuthors);
 });
 
 //Route         - /author/:authorID
@@ -82,9 +96,9 @@ app.get("/author",(req,res)=>{
 //Method        - GET
 //Params        - authorID
 //Body          - none
-app.get("/author/:authorID",(req,res)=>{
-    const getAuthor = Database.Author.filter((authors)=>authors.id==req.params.authorID);
-    res.json({Author:getAuthor});
+app.get("/author/:authorID",async (req,res)=>{
+    const getSpecificAuthor = await Author.findOne({id:req.params.authorID});
+    return res.json(getSpecificAuthor);
 });
 
 //Route         - /author/b/:book
@@ -93,9 +107,14 @@ app.get("/author/:authorID",(req,res)=>{
 //Method        - GET
 //Params        - book 
 //Body          - none
-app.get("/author/b/:bookID",(req,res)=>{
-    const getAuthors = Database.Author.filter((author)=>author.books.includes(req.params.bookID));
-    return res.json({Authors:getAuthors});
+app.get("/author/b/:bookID",async (req,res)=>{
+    try{
+        const getAuthors = await Author.find();
+        const filtered = getAuthors.filter((author)=>author.books.includes(req.params.bookID));
+        return res.json(filtered);
+    }catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /publication
@@ -104,8 +123,9 @@ app.get("/author/b/:bookID",(req,res)=>{
 //Method        - GET
 //Params        - none
 //Body          - none
-app.get("/publication",(req,res)=>{
-    res.json({Publications:Database.Publication})
+app.get("/publication",async (req,res)=>{
+    const getPublications = await Publication.find();
+    return res.json(getPublications);
 });
 
 //Route         - /publication/:publicationID
@@ -114,9 +134,9 @@ app.get("/publication",(req,res)=>{
 //Method        - GET
 //Params        - publicationID
 //Body          - none
-app.get("/publication/:publicationID",(req,res)=>{
-    const getPublication = Database.Publication.filter((publications)=>publications.id==req.params.publicationID);
-    res.json({Publication:getPublication});
+app.get("/publication/:publicationID",async (req,res)=>{
+    const getSpecificPublication = await Publication.findOne({id:req.params.publicationID});
+    return res.json(getSpecificPublication);
 });
 
 //Route         - /publication/b/:book
@@ -125,9 +145,14 @@ app.get("/publication/:publicationID",(req,res)=>{
 //Method        - GET
 //Params        - book
 //Body          - none
-app.get("/publication/b/:bookID",(req,res)=>{
-    const getPublication = Database.Publication.filter((pub)=>pub.books.includes(req.params.bookID));
-    return res.json({Publications:getPublication});
+app.get("/publication/b/:bookID",async (req,res)=>{
+    try{
+        const getPublications = await Publication.find();
+        const filtered = getPublications.filter((pub)=>pub.books.includes(req.params.bookID));
+        return res.json(filtered);
+    }catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /book/new
@@ -136,10 +161,14 @@ app.get("/publication/b/:bookID",(req,res)=>{
 //Method        - POST
 //Params        - none
 //Body          - new book data
-app.post("/book/new",(req,res)=>{
-    const {newBook} = req.body;
-    Database.Book.push(newBook);
-    res.json(Database.Book);
+app.post("/book/new",async (req,res)=>{
+    try{
+        const {newBook} = req.body;
+        await Book.create(newBook);
+        res.json({Message:"New Book Created"});
+    }catch(error){
+        res.json({Error:error.message});
+    }
 });
 
 //Route         - /author/new
@@ -148,10 +177,14 @@ app.post("/book/new",(req,res)=>{
 //Method        - POST
 //Params        - none
 //Body          - new author data
-app.post("/author/new",(req,res)=>{
-    const {newAuthor} = req.body;
-    Database.Book.push(newAuthor);
-    res.json(Database.Author);
+app.post("/author/new",async (req,res)=>{
+    try{
+        const {newAuthor} = req.body;
+        await Author.create(newAuthor);
+        res.json({Message:"New Author Created"});
+    }catch(error){
+        res.json({Error:error.message});
+    }
 });
 
 //Route         - /publication/new
@@ -160,10 +193,14 @@ app.post("/author/new",(req,res)=>{
 //Method        - POST
 //Params        - none
 //Body          - new publication data
-app.post("/publication/new",(req,res)=>{
-    const {newPublication} = req.body;
-    Database.Book.push(newPublication);
-    res.json(Database.Publication);
+app.post("/publication/new",async (req,res)=>{
+    try{
+        const {newPublication} = req.body;
+        await Publication.create(newPublication);
+        res.json({Message:"New Publication Created"});
+    }catch(error){
+        res.json({Error:error.message});
+    }
 });
 
 //Route         - /book/update/:isbn
