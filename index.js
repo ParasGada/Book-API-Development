@@ -44,6 +44,7 @@ app.get("/book",async (req,res)=>{
 //Body          - none
 app.get("/book/:bookID",async (req,res)=>{
     const getSpecificBook = await Book.findOne({ISBN:req.params.bookID});
+    if(!getSpecificBook) return res.json({Message:`No Book Found for ISBN ${req.params.bookID}`});
     return res.json(getSpecificBook);
 });
 
@@ -55,10 +56,10 @@ app.get("/book/:bookID",async (req,res)=>{
 //Body          - none
 app.get("/book/c/:category",async (req,res)=>{ 
     try{
-        const getBooks = await Book.find();
-        const filtered = getBooks.filter((book)=>book.category.includes(req.params.category));
-        return res.json(filtered);
-    }catch(error){
+        const getBooks = await Book.find({category:req.params.category});
+        return res.json(getBooks);
+    }
+    catch(error){
         return res.json({Error:error.message});
     }
 });
@@ -71,9 +72,8 @@ app.get("/book/c/:category",async (req,res)=>{
 //Body          - none
 app.get("/book/a/:author",async (req,res)=>{
     try{
-        const getBooks = await Book.find();
-        const filtered = getBooks.filter((book)=>book.authors.includes(req.params.author));
-        return res.json(filtered);
+        const getBooks = await Book.find({authors:parseInt(req.params.author)});
+        return res.json(getBooks);
     }catch(error){
         return res.json({Error:error.message});
     }
@@ -98,6 +98,7 @@ app.get("/author",async (req,res)=>{
 //Body          - none
 app.get("/author/:authorID",async (req,res)=>{
     const getSpecificAuthor = await Author.findOne({id:req.params.authorID});
+    if(!getSpecificAuthor) return res.json({Message:`No Author Found for ID ${req.params.authorID}`});
     return res.json(getSpecificAuthor);
 });
 
@@ -109,9 +110,8 @@ app.get("/author/:authorID",async (req,res)=>{
 //Body          - none
 app.get("/author/b/:bookID",async (req,res)=>{
     try{
-        const getAuthors = await Author.find();
-        const filtered = getAuthors.filter((author)=>author.books.includes(req.params.bookID));
-        return res.json(filtered);
+        const getAuthors = await Author.find({books:req.params.bookID});
+        return res.json(getAuthors);
     }catch(error){
         return res.json({Error:error.message});
     }
@@ -136,6 +136,7 @@ app.get("/publication",async (req,res)=>{
 //Body          - none
 app.get("/publication/:publicationID",async (req,res)=>{
     const getSpecificPublication = await Publication.findOne({id:req.params.publicationID});
+    if(!getSpecificPublication) return res.json({Message:`No Publication Found for ID ${req.params.publicationID}`})
     return res.json(getSpecificPublication);
 });
 
@@ -147,9 +148,8 @@ app.get("/publication/:publicationID",async (req,res)=>{
 //Body          - none
 app.get("/publication/b/:bookID",async (req,res)=>{
     try{
-        const getPublications = await Publication.find();
-        const filtered = getPublications.filter((pub)=>pub.books.includes(req.params.bookID));
-        return res.json(filtered);
+        const getPublications = await Publication.find({books:req.params.bookID});
+        return res.json(getPublications);
     }catch(error){
         return res.json({Error:error.message});
     }
@@ -209,45 +209,50 @@ app.post("/publication/new",async (req,res)=>{
 //Method        - PUT
 //Params        - isbn
 //Body          - updated book data
-app.put("/book/update/:isbn",(req,res)=>{
-    const {updatedBook} = req.body;
-    const updateData = Database.Book.map((book)=>{
-        if(book.ISBN===req.params.isbn) return {...book,...updatedBook}
-        else return book;
-    });
-    Database.Book = updateData;
-    res.json(Database.Book);
+app.put("/book/update/:isbn",async (req,res)=>{
+    try{
+        const {updatedData} = req.body;
+        const updatedBook = await Book.findOneAndUpdate(
+        {ISBN:req.params.isbn},
+        {$set:updatedData},
+        {new:true}
+        );
+        return res.json(updatedBook);
+    }
+    catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
-//Route         - /bookAuthor/update/:isbn
+//Route         - /book/updateAuthor/:isbn
 //Description   - to update/add new author to book
 //Access        - public
 //Method        - PUT
 //Params        - isbn
 //Body          - updated author/book data
-app.put("/bookAuthor/update/:isbn",(req,res)=>{
-    const {newAuthor} = req.body;
-    const {isbn} = req.params;
-    const updateBook= Database.Book.map((book)=>{
-        if(book.ISBN===isbn){
-            if(!book.authors.includes(newAuthor)){
-                book.authors.push(newAuthor);
-            }
-            else return book;
-        }
-        return book;
-    });
-    const updateAuthor= Database.Author.map((author)=>{
-        if(author.id===newAuthor){
-            if(!author.books.includes(isbn)){
-                author.books.push(isbn);
-            }
-            else return author;
-        }
-        return author;
-    });
-    console.log(updateBook,updateAuthor);
-    return res.json({Books:updateBook});
+app.put("/book/updateAuthor/:isbn",async (req,res)=>{
+    try{
+        const {newAuthor} = req.body;
+        const {isbn} = req.params;
+        const updateBook= await Book.findOneAndUpdate(
+            {ISBN:isbn},
+            {$addToSet:{
+                authors:newAuthor
+            }},
+        {new:true}
+        );
+            const updateAuthor= await Author.findOneAndUpdate(
+                {id:newAuthor},
+                {$addToSet:{
+                    books:isbn
+                }},
+                {new:true}
+            );
+        return res.json({Books:updateBook,Authors:updateAuthor});
+    }
+    catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /author/update/:id
@@ -256,15 +261,20 @@ app.put("/bookAuthor/update/:isbn",(req,res)=>{
 //Method        - PUT
 //Params        - id
 //Body          - updated author data
-app.put("/author/update/:id",(req,res)=>{
-    const {updatedAuthor} = req.body;
-    const updateData = Database.Author.map((author)=>{
-        if(author.id===parseInt(req.params.id)) {
-            return {...author,...updatedAuthor};}
-        else return author;
-    });
-    Database.Author = updateData;
-    res.json(Database.Author);
+app.put("/author/update/:id",async (req,res)=>{
+    try{
+        const {updatedData} = req.body;
+        const updateAuthor = await Author.findOneAndUpdate(
+        {id:req.params.id},
+        {$set:updatedData},
+        {new:true}
+    );
+    return res.json(updateAuthor);
+    }
+    catch(error)
+    {
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /publication/update/:id
@@ -273,36 +283,43 @@ app.put("/author/update/:id",(req,res)=>{
 //Method        - PUT
 //Params        - id
 //Body          - updated publication data
-app.put("/publication/update/:id",(req,res)=>{
-    const {updatedPublication} = req.body;
-    const updateData = Database.Publication.map((pub)=>{
-        if(pub.id===parseInt(req.params.id)) {
-            return {...pub,...updatedPublication};}
-        else return pub;
-    });
-    Database.Publication = updateData;
-    res.json(Database.Publication);
+app.put("/publication/update/:id",async (req,res)=>{
+    try{
+        const {updatedData} = req.body;
+        const updatePublication = await Publication.findOneAndUpdate(
+            {id:req.params.id},
+            {$set:updatedData},
+            {new:true}
+        );
+        return res.json(updatePublication);
+    }
+    catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
-//Route         - /bookPublication/update/:isbn
+//Route         - /book/updatePublication/:isbn
 //Description   - to update/add book to publications
 //Access        - public
 //Method        - PUT
 //Params        - id
 //Body          - updated book data
-app.put("/bookPublication/update/:id",(req,res)=>{
-    const {newBook} = req.body;
-    const {id} = req.params;
-    const updatePublication= Database.Publication.map((publication)=>{
-        if(publication.id===parseInt(id)){
-            if(!publication.books.includes(newBook)){
-                publication.books.push(newBook);
-            }
-            else return publication;
-        }
-        return publication;
-    });
-    return res.json({Publications:updatePublication});
+app.put("/book/updatePublication/:ID",async (req,res)=>{
+    try{
+        const {newBook} = req.body;
+        const {ID} = req.params;
+        const updatePublication = await Publication.findOneAndUpdate(
+            {id:parseInt(ID)},
+            {$addToSet:{
+                books:newBook
+            }},
+            {new:true}
+        );
+    return res.json(updatePublication);
+    }
+    catch(error){
+        return res.json({Error:error.message});
+    }
 });
 
 //Route         - /book/delete/:isbn
